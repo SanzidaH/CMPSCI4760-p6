@@ -155,8 +155,8 @@ int main(int argc, char *argv[]){
        
         for (int i = 0; i < MAXPROC; i++){
             if (semctl(sem_id, i, GETVAL, 0) == 0){ //request in queue         
-                for (int i = 0; i < CAPACITY; i++){
-                   if(memoryQ->array[i] == pct->pcb[i].requested){
+                for (int j = 0; j < CAPACITY; j++){
+                   if(memoryQ->array[j] == pct->pcb[i].requested){
                          pgfaultflag = false;
                    }
                    else{
@@ -312,7 +312,7 @@ void cleanAll(){
     if (shmdt(clock_ns) == -1 || shmdt(clock_s) == -1 || shmdt(pct) == -1) {
       perror("OSS: Error: shmdt failed to detach memory");
      // exit(EXIT_FAILURE);
-      abort();
+      //abort();
     }
    /* if (shmctl(clock_nsid, IPC_RMID, 0) == -1 || shmctl(clock_sid, IPC_RMID, 0) == -1 || shmctl(pct_id, IPC_RMID, 0) == -1 || shmctl(sem_id, IPC_RMID, 0) == -1) {
       perror("OSS: Error: shmctl failed to delete shared memory");

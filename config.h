@@ -20,14 +20,13 @@
 #include <errno.h>
 #include <stdbool.h>
 
-
 /* macros */
 #define MAXPROC 18
 #define MAXRESOURCE 10
 #define TO_NANO 1000000000UL
 #define timeslice 100000
 #define PROCMEM 32
-#define MAXMEM 256
+#define CAPACITY 256
 #define READ 1
 #define WRITE 2
 
@@ -42,43 +41,48 @@ union semun {
 
 union semun arg;
 
+struct Queue {
+    int front, rear, size;
+    unsigned capacity;
+    int* array;
+};
+ 
+
 struct Frame{ // Physical memory
    bool dirtyBit;// switches on when an update is made to a page/modified
    bool refBit;//  whether this page has been referred in the last clock cycle or not
    //bool presentBit;//particular page you are looking for is present or absent. 
-   int procnum;
+   int pid;
    int address;    
 };
 
 struct Page{ // Virtual Memory
-    int address;
-    int frame_num;// frame number in which the current page you are looking for is present 
+    int reqAdd;
+    int frameNumber;// frame number in which the current page you are looking for is present 
 };
 
 struct PCB{//Proc
    bool usedAll;
    int requested;
    int reqtype;
-   int pageIndex;
-   int pageCount;   
-   struct Page pageTable[PROCMEM];
+   int pageIndex; 
+   int usedPage; 
+   struct Page pager[PROCMEM];
 };
 
 struct PCT{
-   struct PCB procs[MAXPROC];
+   struct PCB pcb[MAXPROC];
    int inUse[MAXPROC];
 };
 
 struct PCT *pct;
-struct Frame frametable[MAXMEM];
-
+struct Frame frametable[CAPACITY];
 /* shm variables */
 
 //System clock
 unsigned int *clock_s;
 unsigned int *clock_ns;
 int clock_sid, clock_nsid, pct_id, sem_id;
-
 
 FILE *cstest = NULL, *logfile = NULL, *file = NULL;
 int *allpid2 = NULL, *parentpid = NULL, *childpid = NULL;
@@ -89,7 +93,7 @@ bool doSim = true;
 
 /* functions */   
 void memoryMap();
-bool inFrameTbl(unsigned int);
+bool checkFrame(unsigned int);
 void sem_init();
 void cleanAll();
 void ReportStatistics();
@@ -97,6 +101,13 @@ void increase_clock(long unsigned int inc);
 void set_sem();
 void sem_signal(int);
 void sem_wait(int);
+struct Queue* createQueue(unsigned capacity);
+int isFull(struct Queue* queue);
+int isEmpty(struct Queue* queue);
+void enqueue(struct Queue* queue, int item);
+int dequeue(struct Queue* queue);
+int front(struct Queue* queue);
+int rear(struct Queue* queue);
 
 /* signalhandlers */
 void signal_timer(int signal);
